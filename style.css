@@ -1,0 +1,71 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f0f0f0;
+}
+
+#app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+header {
+    background: #222;
+    color: white;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+main {
+    flex: 1;
+    display: flex;
+}
+
+#sidebar {
+    width: 250px;
+    background: #fff;
+    border-right: 1px solid #ccc;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.sidebar-btn {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    font-size: 16px;
+}
+
+#mailList {
+    list-style: none;
+    padding: 0;
+}
+
+#mailList li {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    cursor: pointer;
+}
+
+#mailList li:hover {
+    background: #eee;
+}
+
+#content {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+}
+
+#composer input, #composer textarea {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 8px;
+}
+
+#composer textarea {
+    height: 200px;
+}
