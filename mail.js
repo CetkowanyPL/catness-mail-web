@@ -91,6 +91,10 @@ async function sendMail() {
     const data = await res.json();
     output(data);
 }
+document.getElementById("sendStatus").style.display = "block";
+setTimeout(() => {
+    document.getElementById("sendStatus").style.display = "none";
+}, 3000);
 
 // ===============================
 // UI – LISTA MAILI
