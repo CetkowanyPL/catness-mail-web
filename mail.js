@@ -1,6 +1,108 @@
+let tokenClient;
+let accessToken = null;
+
 // ===============================
-// LISTA MAILI
+// START – podpinanie przycisków
 // ===============================
+window.onload = () => {
+    document.getElementById("login").onclick = login;
+    document.getElementById("loadMessages").onclick = loadMessagesUI;
+    document.getElementById("composeBtn").onclick = showComposer;
+    document.getElementById("sendMail").onclick = sendMail;
+};
+
+// ===============================
+// LOGOWANIE DO GMAILA
+// ===============================
+function login() {
+    console.log("Klik działa!");
+
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: "513016207790-4feiarm4a0q8updn6qf8vaitlr1opif4.apps.googleusercontent.com",
+        scope: "https://www.googleapis.com/auth/gmail.modify https://www.googleapis.com/auth/gmail.send",
+        callback: (response) => {
+            accessToken = response.access_token;
+            output("Zalogowano! Token pobrany.");
+        }
+    });
+
+    tokenClient.requestAccessToken();
+}
+
+// ===============================
+// POBIERANIE LISTY MAILI
+// ===============================
+async function loadMessages() {
+    if (!accessToken) return output("Najpierw połącz z Gmailem!");
+
+    const res = await fetch(
+        "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20",
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    return await res.json();
+}
+
+// ===============================
+// POBIERANIE TREŚCI MAILA
+// ===============================
+async function loadMessage(id) {
+    const res = await fetch(
+        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+
+    return await res.json();
+}
+
+// ===============================
+// WYSYŁANIE MAILA
+// ===============================
+async function sendMail() {
+    if (!accessToken) return output("Najpierw połącz z Gmailem!");
+
+    const to = document.getElementById("composeTo").value;
+    const subject = document.getElementById("composeSubject").value;
+    const body = document.getElementById("composeBody").value;
+
+    const message =
+        `From: me\r\n` +
+        `To: ${to}\r\n` +
+        `Subject: ${subject}\r\n\r\n` +
+        `${body}`;
+
+    const encodedMessage = btoa(message)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+
+    const res = await fetch(
+        "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+        {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ raw: encodedMessage })
+        }
+    );
+
+    const data = await res.json();
+    output(data);
+}
+
+// ===============================
+// UI – LISTA MAILI
+// ===============================
+async function loadMessagesUI() {
+    const data = await loadMessages();
+    renderMailList(data.messages || []);
+
+    document.getElementById("composer").style.display = "none";
+    document.getElementById("mailView").style.display = "block";
+}
+
 async function renderMailList(messages) {
     const list = document.getElementById("mailList");
     list.innerHTML = "";
@@ -14,7 +116,6 @@ async function renderMailList(messages) {
             document.getElementById("mailContent").textContent =
                 JSON.stringify(mail, null, 2);
 
-            // przełącz widok na treść maila
             document.getElementById("composer").style.display = "none";
             document.getElementById("mailView").style.display = "block";
         };
@@ -24,32 +125,17 @@ async function renderMailList(messages) {
 }
 
 // ===============================
-// PRZEŁĄCZANIE WIDOKÓW
+// UI – PRZEŁĄCZANIE WIDOKÓW
 // ===============================
-
-// przycisk "Napisz"
-document.getElementById("composeBtn").onclick = () => {
+function showComposer() {
     document.getElementById("composer").style.display = "block";
     document.getElementById("mailView").style.display = "none";
-};
+}
 
-// przycisk "Odebrane"
-document.getElementById("loadMessages").onclick = async () => {
-    if (!accessToken) {
-        output("Najpierw połącz z Gmailem!");
-        return;
-    }
-
-    const res = await fetch(
-        "https://gmail.googleapis.com/gmail/v1/users/me/messages?maxResults=20",
-        { headers: { Authorization: `Bearer ${accessToken}` } }
-    );
-
-    const data = await res.json();
-
-    renderMailList(data.messages || []);
-
-    // przełącz widok na listę maili
-    document.getElementById("composer").style.display = "none";
-    document.getElementById("mailView").style.display = "block";
-};
+// ===============================
+// HELPER – WYŚWIETLANIE JSON
+// ===============================
+function output(obj) {
+    document.getElementById("mailContent").textContent =
+        typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+}
